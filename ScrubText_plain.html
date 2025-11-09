@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScrubText</title>
+  <style>
+    :root {
+      --bg: #003b32;
+      --fg: #e8f5e9;
+      --panel: #d7f3d8;
+      --button: #005f4b;
+      --button-hover: #007a5a;
+    }
+    body {
+      font-family: system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--fg);
+      text-align: center;
+      padding: 1.5em;
+    }
+    textarea {
+      width: 90%;
+      height: 120px;
+      margin: 10px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: var(--panel);
+      font-size: 1em;
+      resize: none;
+      outline: none;
+    }
+    button {
+      background: var(--button);
+      color: var(--fg);
+      border: none;
+      border-radius: 6px;
+      padding: 10px 18px;
+      margin: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover {
+      background: var(--button-hover);
+    }
+    #status {
+      font-size: 0.9em;
+      margin-top: 10px;
+      color: var(--fg);
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h2>ScrubText</h2>
+  <p>Paste your text below to remove all invisible characters and normalize spacing.</p>
+  <textarea id="input" placeholder="Paste text here..."></textarea><br>
+  <button onclick="detect()">Detect Watermarks</button>
+  <button onclick="clean()">Clean Text</button>
+  <button onclick="copyOutput()">Copy Output</button>
+  <textarea id="output" placeholder="Output will appear here..." readonly></textarea>
+  <div id="status"></div>
+
+  <script>
+    function detect() {
+      const input = document.getElementById("input").value;
+      const zeroWidth = input.match(/[\u200B-\u200D\uFEFF]/g);
+      const unicodeSpaces = input.match(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g);
+      const countZW = zeroWidth ? zeroWidth.length : 0;
+      const countUS = unicodeSpaces ? unicodeSpaces.length : 0;
+
+      let output = input.replace(/[\u200B-\u200D\uFEFF]/g, "⬛").replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, "⬜");
+      document.getElementById("output").textContent = output;
+      document.getElementById("status").textContent = `Detected: ${countZW} zero-width | ${countUS} unicode spaces`;
+    }
+
+    function clean() {
+      const input = document.getElementById("input").value;
+
+      // Remove invisible zero-width characters
+      let out = input.replace(/[\u200B-\u200D\uFEFF]/g, "");
+
+      // Convert all kinds of Unicode or HTML spaces to normal spaces
+      out = out
+        .replace(/&nbsp;|&#160;|&#x00A0;/gi, " ")
+        .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, " ");
+
+      // Collapse any run of 2+ spaces into one
+      out = out.replace(/ {2,}/g, " ");
+
+      // Trim any leading or trailing spaces
+      out = out.trim();
+
+      document.getElementById("output").textContent = out;
+      document.getElementById("status").textContent =
+        "Cleaned: all invisible and extra spaces flattened.";
+    }
+
+    function copyOutput() {
+      const output = document.getElementById("output");
+      output.select();
+      document.execCommand("copy");
+      document.getElementById("status").textContent = "Output copied to clipboard.";
+    }
+  </script>
+</body>
+</html>
